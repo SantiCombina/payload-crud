@@ -1,4 +1,5 @@
 import { getUsers } from "@/app/actions/get-users";
+import { getCurrentUser } from "@/app/actions/get-current-user";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,6 +13,7 @@ import { ArrowLeft, Pencil, Plus, Users2 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { DeleteUserButton } from "./delete-user-button";
+import { CreateUserForm } from "./create-user-form";
 
 export const metadata = {
   title: "Usuarios | Next Payload CMS",
@@ -21,8 +23,7 @@ export const metadata = {
 function UsersLoading() {
   return (
     <div className="rounded-lg border animate-pulse">
-      <Table>
-        <TableHeader>
+      <Table><TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">
               <div className="h-5 w-20 bg-muted rounded"></div>
@@ -33,14 +34,15 @@ function UsersLoading() {
             <TableHead>
               <div className="h-5 w-40 bg-muted rounded"></div>
             </TableHead>
+            <TableHead>
+              <div className="h-5 w-24 bg-muted rounded"></div>
+            </TableHead>
             <TableHead className="text-right w-[100px]">
               <div className="h-5 w-16 bg-muted rounded ml-auto"></div>
             </TableHead>
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {[...Array(3)].map((_, i) => (
-            <TableRow key={i}>
+        </TableHeader><TableBody>
+          {[...Array(3)].map((_, i) => (<TableRow key={i}>
               <TableCell>
                 <div className="h-8 w-8 bg-muted rounded-full"></div>
               </TableCell>
@@ -50,16 +52,17 @@ function UsersLoading() {
               <TableCell>
                 <div className="h-5 w-36 bg-muted rounded"></div>
               </TableCell>
+              <TableCell>
+                <div className="h-5 w-20 bg-muted rounded"></div>
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <div className="h-8 w-8 bg-muted rounded"></div>
                   <div className="h-8 w-8 bg-muted rounded"></div>
                 </div>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+            </TableRow>))}
+        </TableBody></Table>
     </div>
   );
 }
@@ -78,6 +81,8 @@ function UsersError({ error }: { error: Error }) {
 }
 
 export default async function UsersPage() {
+  const currentUser = await getCurrentUser();
+
   return (
     <main className="min-h-screen flex flex-col items-center p-6 md:p-12">
       <div className="w-full max-w-4xl">
@@ -97,15 +102,9 @@ export default async function UsersPage() {
                 Volver
               </Link>
             </Button>
-            <Button asChild>
-              <Link href="/users/create" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Nuevo Usuario
-              </Link>
-            </Button>
           </div>
         </div>
-
+        <CreateUserForm currentUserRole={currentUser?.role} />
         <Suspense fallback={<UsersLoading />}>
           <UsersList />
         </Suspense>
@@ -116,7 +115,10 @@ export default async function UsersPage() {
 
 async function UsersList() {
   try {
-    const users = await getUsers();
+    const [users, currentUser] = await Promise.all([
+      getUsers(),
+      getCurrentUser(),
+    ]);
 
     if (!users?.length) {
       return (
@@ -128,32 +130,25 @@ async function UsersList() {
           <p className="text-muted-foreground mb-6 max-w-xs">
             Comienza agregando el primer usuario para administrar tu aplicación.
           </p>
-          <Button asChild>
-            <Link href="/users/create" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Crear primer usuario
-            </Link>
-          </Button>
+          {currentUser?.role === "admin" && (
+            <CreateUserForm currentUserRole={currentUser.role} />
+          )}
         </div>
       );
-    }
-
-    return (
+    }    return (
       <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
+        <Table><TableHeader>
             <TableRow>
               <TableHead className="w-[80px]">Avatar</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Rol</TableHead>
               <TableHead className="text-right w-[100px]">Acciones</TableHead>
             </TableRow>
-          </TableHeader>
-          <TableBody>
+          </TableHeader><TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
-                  {/* Placeholder for an avatar image or icon */}
                   <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
                     {user.name?.charAt(0).toUpperCase() || "U"}
                   </div>
@@ -162,26 +157,36 @@ async function UsersList() {
                   {user.name || "N/A"}
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      user.role === "admin"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-orange-100 text-orange-700"
+                    }`}
+                  >
+                    {user.role === "admin" ? "Administrador" : "Usuario"}
+                  </span>
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end items-center gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
-                      asChild
+                      className="h-8 w-8 cursor-pointer"
                     >
-                      <Link href={`/users/${user.id}/edit`}>
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Editar</span>
-                      </Link>
                     </Button>
-                    <DeleteUserButton id={user.id} />
+                    <DeleteUserButton
+                      id={user.id}
+                      currentUserRole={currentUser?.role}
+                    />
                   </div>
                 </TableCell>
               </TableRow>
             ))}
-          </TableBody>
-        </Table>
+          </TableBody></Table>
       </div>
     );
   } catch (error) {
