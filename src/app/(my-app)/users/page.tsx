@@ -1,5 +1,5 @@
-import { getUsers } from "@/app/actions/get-users";
 import { getCurrentUser } from "@/app/actions/get-current-user";
+import { getUsers } from "@/app/actions/get-users";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -9,11 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Pencil, Plus, Users2 } from "lucide-react";
+import { Users2 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { CreateUserDialog } from "./create-user-dialog";
 import { DeleteUserButton } from "./delete-user-button";
-import { CreateUserForm } from "./create-user-form";
+import { UpdateUserDialog } from "./update-user-dialog";
 
 export const metadata = {
   title: "Usuarios | Next Payload CMS",
@@ -23,7 +24,8 @@ export const metadata = {
 function UsersLoading() {
   return (
     <div className="rounded-lg border animate-pulse">
-      <Table><TableHeader>
+      <Table>
+        <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">
               <div className="h-5 w-20 bg-muted rounded"></div>
@@ -41,8 +43,10 @@ function UsersLoading() {
               <div className="h-5 w-16 bg-muted rounded ml-auto"></div>
             </TableHead>
           </TableRow>
-        </TableHeader><TableBody>
-          {[...Array(3)].map((_, i) => (<TableRow key={i}>
+        </TableHeader>
+        <TableBody>
+          {[...Array(3)].map((_, i) => (
+            <TableRow key={i}>
               <TableCell>
                 <div className="h-8 w-8 bg-muted rounded-full"></div>
               </TableCell>
@@ -61,8 +65,10 @@ function UsersLoading() {
                   <div className="h-8 w-8 bg-muted rounded"></div>
                 </div>
               </TableCell>
-            </TableRow>))}
-        </TableBody></Table>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -85,8 +91,7 @@ export default async function UsersPage() {
 
   return (
     <main className="min-h-screen flex flex-col items-center p-6 md:p-12">
-      <div className="w-full max-w-4xl">
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
+      <div className="w-full max-w-4xl">        <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
           <div className="text-center sm:text-left">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
               Usuarios
@@ -95,16 +100,8 @@ export default async function UsersPage() {
               Gestiona los usuarios de tu aplicación.
             </p>
           </div>
-          <div className="flex flex-shrink-0 gap-3">
-            <Button asChild variant="outline">
-              <Link href="/" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Link>
-            </Button>
-          </div>
+          <CreateUserDialog currentUserRole={currentUser?.role} />
         </div>
-        <CreateUserForm currentUserRole={currentUser?.role} />
         <Suspense fallback={<UsersLoading />}>
           <UsersList />
         </Suspense>
@@ -129,15 +126,15 @@ async function UsersList() {
           </h3>
           <p className="text-muted-foreground mb-6 max-w-xs">
             Comienza agregando el primer usuario para administrar tu aplicación.
-          </p>
-          {currentUser?.role === "admin" && (
-            <CreateUserForm currentUserRole={currentUser.role} />
+          </p>          {currentUser?.role === "admin" && (
+            <CreateUserDialog currentUserRole={currentUser.role} />
           )}
         </div>
       );
     }    return (
       <div className="rounded-lg border">
-        <Table><TableHeader>
+        <Table>
+          <TableHeader>
             <TableRow>
               <TableHead className="w-[80px]">Avatar</TableHead>
               <TableHead>Nombre</TableHead>
@@ -145,7 +142,8 @@ async function UsersList() {
               <TableHead>Rol</TableHead>
               <TableHead className="text-right w-[100px]">Acciones</TableHead>
             </TableRow>
-          </TableHeader><TableBody>
+          </TableHeader>
+          <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
@@ -170,14 +168,15 @@ async function UsersList() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 cursor-pointer"
-                    >
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Editar</span>
-                    </Button>
+                    <UpdateUserDialog
+                      user={{
+                        id: user.id.toString(),
+                        name: user.name || '',
+                        email: user.email,
+                        role: user.role
+                      }}
+                      currentUserRole={currentUser?.role}
+                    />
                     <DeleteUserButton
                       id={user.id}
                       currentUserRole={currentUser?.role}
@@ -186,7 +185,8 @@ async function UsersList() {
                 </TableCell>
               </TableRow>
             ))}
-          </TableBody></Table>
+          </TableBody>
+        </Table>
       </div>
     );
   } catch (error) {

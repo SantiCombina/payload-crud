@@ -2,6 +2,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
+export const metadata = {
+  title: "Payload CRUD Demo",
+  description: "Una demostración completa de CRUD usando Next.js y Payload CMS. Gestión de usuarios con interfaz moderna y funcionalidades completas.",
+  keywords: ["Next.js", "Payload CMS", "CRUD", "TypeScript", "React", "Gestión de usuarios"],
+  openGraph: {
+    title: "Payload CRUD Demo",
+    description: "Demostración de aplicación CRUD con Next.js y Payload CMS",
+    type: "website",
+  },
+};
+
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 md:p-24">
